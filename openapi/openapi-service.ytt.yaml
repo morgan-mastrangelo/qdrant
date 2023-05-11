@@ -1,0 +1,75 @@
+#@ load("openapi.lib.yml", "response", "reference", "type", "array")
+
+paths:
+  /telemetry:
+    get:
+      summary: Collect telemetry data
+      description: Collect telemetry data including app info, system info, collections info, cluster info, configs and statistics
+      operationId: telemetry
+      tags:
+        - service
+      parameters:
+        - name: anonymize
+          in: query
+          description: "If true, anonymize result"
+          required: false
+          schema:
+            type: boolean
+      responses: #@ response(reference("TelemetryData"))
+
+  /metrics:
+    get:
+      summary: Collect Prometheus metrics data
+      description: Collect metrics data including app info, collections info, cluster info and statistics
+      operationId: metrics
+      tags:
+        - service
+      parameters:
+        - name: anonymize
+          in: query
+          description: "If true, anonymize result"
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Metrics data in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP app_info information about qdrant server
+                  # TYPE app_info counter
+                  app_info{name="qdrant",version="0.11.1"} 1
+                  # HELP cluster_enabled is cluster support enabled
+                  # TYPE cluster_enabled gauge
+                  cluster_enabled 0
+                  # HELP collections_total number of collections
+                  # TYPE collections_total gauge
+                  collections_total 1
+        '4XX':
+          description: error
+
+  /locks:
+    post:
+      summary: Set lock options
+      description: Set lock options. If write is locked, all write operations and collection creation are forbidden. Returns previous lock options
+      operationId: post_locks
+      tags:
+        - service
+      requestBody:
+        description: Lock options and optional error message
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocksOption"
+      responses: #@ response(reference("LocksOption"))
+
+    get:
+      summary: Get lock options
+      description: Get lock options. If write is locked, all write operations and collection creation are forbidden
+      operationId: get_locks
+      tags:
+        - service
+      responses: #@ response(reference("LocksOption"))
